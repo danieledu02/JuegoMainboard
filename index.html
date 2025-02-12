@@ -16,22 +16,29 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
         }
         h1 {
             margin-top: 20px;
             color: #ffffff; /* Texto blanco */
+            font-size: 24px;
+        }
+        .grid-container {
+            width: 100%;
+            max-width: 600px; /* Máximo ancho del tablero */
+            overflow-x: auto; /* Desplazamiento horizontal si es necesario */
+            padding: 10px;
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(4, 120px);
-            grid-gap: 10px;
+            grid-template-columns: repeat(4, 1fr); /* 4 columnas de tamaño flexible */
+            gap: 10px; /* Espacio entre tarjetas */
             justify-content: center;
-            margin-top: 20px;
+            margin: 0 auto;
         }
         .card {
-            width: 120px;
-            height: 120px;
+            width: 100%; /* Ancho flexible */
+            aspect-ratio: 1; /* Mantener relación 1:1 (cuadrada) */
             position: relative;
             perspective: 1000px;
             cursor: pointer;
@@ -104,12 +111,27 @@
         .hidden {
             display: none;
         }
+
+        /* Estilos para pantallas pequeñas (móviles) */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 20px; /* Título más pequeño */
+            }
+            .grid {
+                gap: 5px; /* Menor espacio entre tarjetas */
+            }
+            .card span {
+                font-size: 12px; /* Texto más pequeño */
+            }
+        }
     </style>
 </head>
 <body>
     <h1>Empareja las Partes del Mainboard</h1>
     <div class="timer hidden">Tiempo: <span id="time">00:00:00</span></div>
-    <div class="grid hidden" id="gameBoard"></div>
+    <div class="grid-container">
+        <div class="grid hidden" id="gameBoard"></div>
+    </div>
     <div class="message" id="message"></div>
     <button class="start-button" id="startButton">Comenzar Juego</button>
     
