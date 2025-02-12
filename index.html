@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Empareja las Partes del Mainboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #121212; /* Fondo oscuro */
+            color: #ffffff; /* Texto blanco */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            margin-top: 20px;
+            color: #ffffff; /* Texto blanco */
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 120px);
+            grid-gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .card {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .card .front, .card .back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #333; /* Borde gris */
+            border-radius: 10px;
+            background-color: #1e1e1e; /* Fondo gris oscuro */
+            transition: transform 0.6s;
+        }
+        .card .front {
+            transform: rotateY(180deg);
+        }
+        .card .back {
+            background-image: url('back.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+        .card.flipped .front {
+            transform: rotateY(0deg);
+        }
+        .card.flipped .back {
+            transform: rotateY(180deg);
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+        .card span {
+            font-size: 14px;
+            text-align: center;
+            padding: 5px;
+            color: #ffffff; /* Texto blanco */
+        }
+        .timer {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffffff; /* Texto blanco */
+        }
+        .message {
+            margin-top: 20px;
+            font-size: 20px;
+            color: #4caf50; /* Texto verde */
+            font-weight: bold;
+        }
+        .start-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4caf50; /* Verde */
+            color: #ffffff; /* Texto blanco */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .start-button:hover {
+            background-color: #45a049; /* Verde más oscuro */
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Empareja las Partes del Mainboard</h1>
+    <div class="timer hidden">Tiempo: <span id="time">00:00:00</span></div>
+    <div class="grid hidden" id="gameBoard"></div>
+    <div class="message" id="message"></div>
+    <button class="start-button" id="startButton">Comenzar Juego</button>
+    
+    <script>
+        const parts = [
+            { name: "CPU Socket", img: "cpu_socket.jpg", function: "Aloja el procesador" },
+            { name: "RAM Slots", img: "ram_slots.jpg", function: "Ubicación de la memoria RAM" },
+            { name: "PCI Slots", img: "pci_slots.jpg", function: "Conexión de tarjetas de expansión" },
+            { name: "Chipset", img: "chipset.jpg", function: "Gestiona la comunicación entre componentes" },
+            { name: "Puertos SATA", img: "sata_ports.jpg", function: "Conectan discos duros y SSDs" },
+            { name: "Conectores de alimentación", img: "power_connectors.jpg", function: "Suministra energía a la placa" },
+            { name: "BIOS/UEFI Chip", img: "bios_chip.jpg", function: "Mantiene la configuración de la BIOS" },
+            { name: "Puertos traseros", img: "rear_ports.jpg", function: "Conectores externos de la placa" },
+            { name: "VRM", img: "vrm.jpg", function: "Regula el voltaje del procesador" },
+            { name: "Batería CMOS", img: "cmos_battery.jpg", function: "Alimenta la memoria CMOS" },
+            { name: "M.2 Slot", img: "m2_slot.jpg", function: "Conecta unidades de almacenamiento M.2" },
+            { name: "Heatsink", img: "heatsink.jpg", function: "Disipa el calor de los componentes" },
+            { name: "Front Panel Connectors", img: "front_panel.jpg", function: "Conectores para el panel frontal" },
+            { name: "USB Headers", img: "usb_headers.jpg", function: "Conectores internos para USB" },
+            { name: "Audio Chipset", img: "audio_chipset.jpg", function: "Procesa el audio de la placa" },
+            { name: "LAN Port", img: "lan_port.jpg", function: "Conexión de red por cable" }
+        ];
+
+        let selectedCards = [];
+        let matchedPairs = 0;
+        let startTime = null;
+        let timerInterval = null;
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function createGame() {
+            const gameBoard = document.getElementById("gameBoard");
+            gameBoard.innerHTML = "";
+            matchedPairs = 0;
+            document.getElementById("message").innerText = "";
+
+            // Selecciona 8 partes (4 imágenes y 4 textos)
+            let selectedParts = shuffle(parts).slice(0, 8);
+            let imageParts = selectedParts.map(part => ({ ...part, type: "image" }));
+            let textParts = selectedParts.map(part => ({ ...part, type: "text" }));
+            let cardsData = shuffle([...imageParts, ...textParts]);
+
+            cardsData.forEach(part => {
+                const card = document.createElement("div");
+                card.classList.add("card");
+                card.dataset.name = part.name;
+                card.dataset.type = part.type;
+
+                const front = document.createElement("div");
+                front.classList.add("front");
+
+                if (part.type === "image") {
+                    const img = document.createElement("img");
+                    img.src = part.img;
+                    img.alt = part.name;
+                    front.appendChild(img);
+                } else {
+                    const text = document.createElement("span");
+                    text.innerText = part.function;
+                    front.appendChild(text);
+                }
+
+                const back = document.createElement("div");
+                back.classList.add("back");
+
+                card.appendChild(front);
+                card.appendChild(back);
+                card.addEventListener("click", flipCard);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (selectedCards.length < 2 && !this.classList.contains("flipped")) {
+                this.classList.add("flipped");
+                selectedCards.push(this);
+
+                if (selectedCards.length === 2) {
+                    setTimeout(checkMatch, 500);
+                }
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = selectedCards;
+            if (card1.dataset.name === card2.dataset.name && card1.dataset.type !== card2.dataset.type) {
+                // Si coinciden y son de tipos diferentes (imagen y texto)
+                card1.removeEventListener("click", flipCard);
+                card2.removeEventListener("click", flipCard);
+                matchedPairs++;
+
+                if (matchedPairs === 8) {
+                    stopTimer();
+                    document.getElementById("message").innerText = "¡HAS ENCONTRADO TODAS LAS PAREJAS!";
+                    setTimeout(() => {
+                        resetGame();
+                    }, 3000); // Reinicia el juego después de 3 segundos
+                }
+            } else {
+                // Si no coinciden, voltear de nuevo
+                setTimeout(() => {
+                    card1.classList.remove("flipped");
+                    card2.classList.remove("flipped");
+                }, 500);
+            }
+            selectedCards = [];
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                const hours = Math.floor(elapsedTime / 3600);
+                const minutes = Math.floor((elapsedTime % 3600) / 60);
+                const seconds = elapsedTime % 60;
+                document.getElementById("time").innerText = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        function resetGame() {
+            document.getElementById("gameBoard").classList.add("hidden");
+            document.getElementById("time").innerText = "00:00:00";
+            document.getElementById("message").innerText = "";
+            document.getElementById("startButton").classList.remove("hidden");
+            stopTimer();
+        }
+
+        document.getElementById("startButton").addEventListener("click", () => {
+            document.getElementById("startButton").classList.add("hidden");
+            document.getElementById("gameBoard").classList.remove("hidden");
+            document.querySelector(".timer").classList.remove("hidden");
+            createGame();
+            startTimer();
+        });
+    </script>
+</body>
+</html>
